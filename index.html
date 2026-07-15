@@ -955,8 +955,8 @@
                 this.y = canvasHeight * 0.45;
                 this.radius = 16;
                 this.vy = 0;
-                this.gravity = 0.08;
-                this.jumpImpulse = -2.7;
+                this.gravity = 0.15;
+                this.jumpImpulse = -3.8;
                 this.rotation = 0;
                 this.flapFrame = 0;
                 this.flapSpeed = 0.15;
@@ -968,7 +968,7 @@
             
             update(groundY) {
                 this.vy += this.gravity;
-                if (this.vy > 2.6) this.vy = 2.6; // Cap downward speed
+                if (this.vy > 4.5) this.vy = 4.5; // Cap downward speed
                 
                 this.y += this.vy;
                 
@@ -1205,6 +1205,11 @@
                 this.shakeIntensity = 0;
                 this.hoverTime = 0;
                 this.groundOffset = 0;
+                
+                // Fixed Timestep properties to prevent lag/differences between PC and mobile
+                this.lastTime = 0;
+                this.accumulator = 0;
+                this.timeStep = 1000 / 60; // 60 updates per second (16.67ms)
                 
                 // Load DOM Reference pointers
                 this.hudScore = document.getElementById('hudScore');
@@ -1615,14 +1620,29 @@
                 this.ctx.restore();
             }
             
-            loop() {
-                this.update();
+            loop(currentTime = 0) {
+                if (!this.lastTime) this.lastTime = currentTime;
+                let deltaTime = currentTime - this.lastTime;
+                
+                // Prevent death spiral (capping accumulator step lag)
+                if (deltaTime > 250) deltaTime = 250;
+                
+                this.lastTime = currentTime;
+                this.accumulator += deltaTime;
+                
+                // Run physics updates at a fixed 60fps rate
+                while (this.accumulator >= this.timeStep) {
+                    this.update();
+                    this.accumulator -= this.timeStep;
+                }
+                
                 this.draw();
-                requestAnimationFrame(() => this.loop());
+                requestAnimationFrame((time) => this.loop(time));
             }
             
             start() {
-                this.loop();
+                this.lastTime = performance.now();
+                requestAnimationFrame((time) => this.loop(time));
             }
         }
 
