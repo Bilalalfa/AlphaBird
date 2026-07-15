@@ -955,8 +955,13 @@
                 this.y = canvasHeight * 0.45;
                 this.radius = 16;
                 this.vy = 0;
-                this.gravity = 0.15;
-                this.jumpImpulse = -3.8;
+                
+                // Deteksi perangkat HP/Mobile (touch support atau lebar layar)
+                const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth < 768);
+                this.gravity = isMobile ? 0.21 : 0.15;
+                this.jumpImpulse = isMobile ? -4.3 : -3.8;
+                this.terminalVelocity = isMobile ? 5.5 : 4.5;
+                
                 this.rotation = 0;
                 this.flapFrame = 0;
                 this.flapSpeed = 0.15;
@@ -968,7 +973,7 @@
             
             update(groundY) {
                 this.vy += this.gravity;
-                if (this.vy > 4.5) this.vy = 4.5; // Cap downward speed
+                if (this.vy > this.terminalVelocity) this.vy = this.terminalVelocity; // Cap downward speed
                 
                 this.y += this.vy;
                 
